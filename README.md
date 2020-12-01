@@ -9,10 +9,10 @@ Assumptions simplify the project at some cost.
 ## (Rough) Outline
 * Programming Stuff
     * Bridge Object
-        * Locations of free points
+        * Locations of free points (Done)
         * Material between two points
-        * Cost Function
-        * Maximum Stress Function
+        * Cost Function (Half done)
+        * Stress Constraint
 
     * Constrained Optimizer
         * Unconstrained Optimizer
