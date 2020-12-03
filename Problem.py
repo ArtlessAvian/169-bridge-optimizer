@@ -46,7 +46,29 @@ def distance(point, other):
 
 if __name__ == "__main__":
     problem = Problem((-10, 0), (10, 0))
-    print(problem.objective_function())
+    step = 0.0001
+
+    # This will work once someone writes from_vector()
+    gradient = []
+
+    old = problem.objective_function()
+    vec = problem.bridge.to_vector()
+
+    for i in range(len(vec)):
+        vec[i] += step
+        problem.bridge.from_vector(vec)
+        vec[i] -= step
+
+        new = (problem.objective_function())
+        partial = (new - old) / h
+        gradient.append(partial)
+
+    print(gradient)
+
+    # print(problem.objective_function())
     
-    problem.bridge.main[0] = (0, 2)
-    print(problem.objective_function())
+    # problem.bridge.main[0] = (-h, 0)
+    # print(problem.objective_function())
+
+
+    
