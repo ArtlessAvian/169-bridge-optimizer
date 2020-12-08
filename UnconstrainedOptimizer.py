@@ -24,19 +24,18 @@ def calculate_gradient(vec, func, small_step = 1e-8):
     for i in range(len(vec)):
         vec[i] += small_step
         new = func(vec)
-        vec[i] -= small_step
-        vec[i] -= small_step
+        vec[i] -= small_step * 2
         old = func(vec)
         vec[i] += small_step
         
-        partial = (new - old) / small_step # / 2
+        partial = (new - old) / small_step / 2
         gradient.append(partial)    
     return gradient
 
 def line_search(func, grad_func, vec, direction):
     # really garbage line search
     # tendency to explode for large gradients
-    return [vec[i] + direction[i] / 100 for i in range(len(vec))]
+    return [vec[i] + direction[i] / 150 for i in range(len(vec))]
 
 # Generic Vector Operations
 def VectorMagnitude(vec1):
