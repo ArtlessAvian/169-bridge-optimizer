@@ -33,9 +33,45 @@ def calculate_gradient(vec, func, small_step = 1e-8):
     return gradient
 
 def line_search(func, grad_func, vec, direction):
+    objective = lambda a : func([vec[i] + a * direction[i] for i in range(len(vec))])
+    a, b = bracket_minimum(objective)
+    alpha = golden_section_search(objective, a, b)
+    return [vec[i] + alpha * direction[i] for i in range(len(vec))]
     # really garbage line search
     # tendency to explode for large gradients
-    return [vec[i] + direction[i] / 150 for i in range(len(vec))]
+    # return [vec[i] + direction[i] / 150 for i in range(len(vec))]
+
+def bracket_minimum(func, x = 0, s = 1e-2, k = 2.0):
+    a, ya = x, func(x)
+    b, yb = a + s, func(a + s)
+    if yb > ya:
+        a, b = b, a
+        ya, yb = yb, ya
+        s = -s
+    while True: 
+        c, yc = b + s, func(b + s)
+        if yc > yb:
+            return (a, c) if a < c else (c, a)
+        a, ya, b, yb = b, yb, c, yc
+        s *= k
+
+def golden_section_search(func, a, b, n = 5000):
+    golden = (1 + 5 ** 0.5) / 2
+    phi = golden - 1
+    d = phi * b + (1 - phi) * a
+    yd = func(d)
+    for i in range(n):
+        c = phi * a + (1 - phi) * b
+        yc = func(c)
+        if yc < yd:
+            b, d, yd = d, c, yc
+        else:
+            a, b = b, c
+    return c
+    
+
+
+
 
 # Generic Vector Operations
 def VectorMagnitude(vec1):

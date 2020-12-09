@@ -20,6 +20,7 @@ class Problem:
         self.bridge.from_vector(vec)
         return self.bridge.inequality_constraints()
 
+'''
 if __name__ == "__main__":
     
     # Example usage?
@@ -27,8 +28,7 @@ if __name__ == "__main__":
     bridge.randomize()
     print(bridge.objective_function())
     bridge.print_desmos_copypaste()
-    vec = [1, 2, 3, 4]
-    print(f"Hello {VectorMagnitude(vec)}")
+
     problem = Problem(bridge)
     vec = bridge.to_vector()
 
@@ -42,3 +42,4 @@ if __name__ == "__main__":
     bridge.from_vector(vec)
     bridge.print_desmos_copypaste()
     print(bridge.objective_function())
+'''

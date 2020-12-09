@@ -109,6 +109,7 @@ class Bridge:
         #         b = self.free[i][1] - m * self.free[i][0]
         #         print(f"y = {m}x + {b} {{{self.free[i][0]} < x < {self.free[j][0]}}}")
 
+'''
 
 if __name__ == "__main__":
     bridge = Bridge()
@@ -124,3 +125,4 @@ if __name__ == "__main__":
     print(bridge2.objective_function())
     
     bridge2.print_desmos_copypaste()
+    '''
