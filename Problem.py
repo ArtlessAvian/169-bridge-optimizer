@@ -35,7 +35,6 @@ def calculate_gradient(vec, func, small_step = 1e-8):
         gradient.append(partial)    
     return gradient
 
-
 if __name__ == "__main__":
     
     # Example usage?
