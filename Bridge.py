@@ -46,10 +46,32 @@ class Bridge:
         return strut_cost + road_cost
 
     def equality_constraints(self):
-        return 0
+        
+        return []
 
     def inequality_constraints(self):
-        return 0
+        # solved = [False for vertex in self.free]
+        # frontier = [vertex == 0 for vertex in self.free]
+        # tension = [None for vertex in self.edges] # negative for tension, positive for compression
+
+        # while any(frontier):
+        #     current = frontier.index(True)
+        #     sum_forces = [0, -2]            
+        
+        # if not all(solved):
+        #     print("oh no!")
+        
+        constraints = []
+
+        min_length = 0.1
+
+        for i in range(len(self.free)):
+            for j in range(i, len(self.free)):
+                constraints.insert(distance(self.free[i], self.free[j]) - min_length)
+            for j in range(len(self.fixed)):
+                constraints.insert(distance(self.free[i], self.fixed[j]) - min_length)
+
+        return constraints
 
     # Vector Conversion
 
