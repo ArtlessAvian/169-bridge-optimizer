@@ -22,8 +22,8 @@ class Bridge:
         # the next n_main have extra weight.
         # the rest (n_other) have some weight.
         self.nodes = [left, right]
-        self.nodes.extend((3 * i / n_main, 0) for i in range(n_main))
-        self.nodes.extend((3 * i / n_other, 5) for i in range(n_other))
+        self.nodes.extend((((i + 1) / (n_main + 1)) * 20 - 10, 0) for i in range(n_main))
+        self.nodes.extend((((i + 1) / (n_other + 1)) * 20 - 10, 5) for i in range(n_other))
 
         self.n_main = n_main
 
@@ -69,7 +69,7 @@ class Bridge:
                     self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
                     last_other_index = other_index
 
-        self.edge_width = [1 for i in self.members]
+        self.edge_width = [100 for i in self.members]
         self.coeff = None
 
         self.road_cost_per_length = 10
@@ -148,7 +148,7 @@ class Bridge:
         forces = linalg.solve(bridge.coeff_matrix(), thingies)
 
         for force, width in zip(forces, self.edge_width):
-            constraints.append(self.edge_width - forces)
+            constraints.append(width - abs(force))
         
         return constraints
 
@@ -180,7 +180,7 @@ class Bridge:
         for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
         for i in range(len(self.edge_width)):
-            self.edge_width[i] = random.random()
+            self.edge_width[i] = random.random() * 100
 
     # Helpers for humans.
     def print_desmos_copypaste(self):
@@ -219,17 +219,13 @@ if __name__ == "__main__":
     #     assert(i+1 == j)
 
     # Manual sanity checks
-    bridge = Bridge(1, 1)
+    bridge = Bridge(2, 3)
     print("  Nodes:", str(bridge.nodes))
     print("Members:", str(bridge.members))
 
     print(" Vector:", bridge.to_vector())
     print("Objctve:", bridge.objective_function())
 
-    thingies = np.zeros(len(bridge.members) + 3)
-    # Push down on a main node.
-    # The sum of forces should then be positive.
-    thingies[5] = 10
-    print(linalg.solve(bridge.coeff_matrix(), thingies))
+    print(" Stress:", bridge.inequality_max_stress())
 
     # bridge.print_desmos_copypaste()
