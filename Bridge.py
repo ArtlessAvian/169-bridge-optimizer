@@ -7,17 +7,56 @@ def distance(point, other):
     return math.sqrt(dx * dx + dy * dy)
 
 class Bridge:
-    def __init__(self, left = (-10, 0), right = (10, 0), other = [], n_main = 2, n_other = 3):
-        self.fixed = [left, right]
-        self.fixed.extend(other)
-        
-        self.n_main = n_main
-        # The first n_main are main joints.
-        self.free = [(0, 0) for i in range(n_main + n_other)]
-    
-        # TODO: Reduce wasted space
-        # [free] x [free U fixed]
-        self.edges = [[0 for j in range(len(self.fixed) + len(self.free))] for i in range(len(self.free))]
+    def __init__(self, left = (-10, 0), right = (10, 0), n_main = 1, n_other = 2):
+        # index 0 is always fixed, 1 is always a horizontal roller.
+        # the next n_main have extra weight.
+        # the rest (n_other) have some weight.
+        self.nodes = [left, right]
+        self.nodes.extend((i, i) for i in range(n_main + n_other))
+
+        # Create (2 * #nodes - 3) members.
+        # This makes the bridge solvable.
+        self.members = [] 
+
+        # Connect the left to the main,
+        # the main to each other,
+        # the main to the right
+        self.members.append((0, 2))
+        for i in range(n_main-1):
+            self.members.append((2 + i, 2 + i + 1))
+        self.members.append((2 + n_main - 1, 1))
+
+        # repeat for the other nodes.
+        start = n_main + 2
+        self.members.append((0, start))
+        for i in range(n_other - 1):
+            self.members.append((start + i, start + i + 1))
+        self.members.append((start + n_other - 1, 1))
+
+        # now we have a big polygon!
+        # connect the rest, somehow.
+        # (many ways to do this, its kinda hard tbh.)
+        # (TODO: make symmetrical for shenanigans)
+        if n_other > n_main:
+            last_main_index = 0 # 0 start intentional
+            for i in range(n_other):
+                main_index = (i * n_main) // n_other
+                other_index = i
+                self.members.append((main_index + 2, other_index + (2 + n_main)))
+                if last_main_index != main_index:
+                    self.members.append((main_index + 2, other_index + (2 + n_main) - 1))
+                    last_main_index = main_index
+        else:
+            last_other_index = 0 # 0 start intentional
+            for i in range(n_main):
+                main_index = i
+                other_index = (i * n_other) // n_main
+                self.members.append((main_index + 2, other_index + (2 + n_main)))
+                if last_other_index != main_index:
+                    self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
+                    last_other_index = other_index
+
+        self.edge_width = [1 for i in self.members]
 
         self.road_cost_per_length = 10 # Temporary
 
@@ -45,14 +84,26 @@ class Bridge:
 
         return strut_cost + road_cost
 
+    def objective_strut_cost(self):
+        return 0
+
+    def objective_road_cost(self):
+        return 0
+
     def equality_constraints(self):
-        
         return []
 
     def inequality_constraints(self):
-        # solved = [False for vertex in self.free]
-        # frontier = [vertex == 0 for vertex in self.free]
-        # tension = [None for vertex in self.edges] # negative for tension, positive for compression
+        constraints = self.inequality_max_stress()
+        constraints.extend(self.inequality_min_length())        
+        return constraints
+
+    def inequality_max_stress(self):
+        constraints = []
+        
+        solved = [False for vertex in self.free]
+        frontier = [vertex == 0 for vertex in self.free]
+        tension = [None for vertex in self.edges] # negative for tension, positive for compression
 
         # while any(frontier):
         #     current = frontier.index(True)
@@ -61,48 +112,35 @@ class Bridge:
         # if not all(solved):
         #     print("oh no!")
         
-        constraints = []
+        return constraints
 
+    def inequality_min_length(self):
         min_length = 0.1
-
+        constraints = []
         for i in range(len(self.free)):
             for j in range(i, len(self.free)):
                 constraints.insert(distance(self.free[i], self.free[j]) - min_length)
             for j in range(len(self.fixed)):
                 constraints.insert(distance(self.free[i], self.fixed[j]) - min_length)
-
         return constraints
 
     # Vector Conversion
 
     def to_vector(self):
         vec = []
-        for point in self.free:
+        for point in self.nodes[2:]:
             vec.extend(point)
-        for row in self.edges:
-            vec.extend(row)
+        vec.extend(self.edge_width)
         return vec
     
     def from_vector(self, vec):
-        for i in range(len(self.free)):
-            self.free[i] = (vec[2 * i], vec[2 * i + 1])
+        for i in range(len(self.nodes) - 2):
+            self.nodes[2 + i] = (vec[2 * i], vec[2 * i + 1])
 
-        start = 2 * len(self.free)
-        for i in range(len(self.edges)):
-            stride = len(self.fixed) + len(self.free)
-            offset = start + stride * i
-            self.edges[i] = vec[offset : offset + stride]
+        start = 2 * (len(self.nodes) - 2)
+        self.edge_width = vec[start : start + len(self.edge_width)]
 
     # Helpers to interpret the internal data.
-
-    def get_edge_to_free(self, i, j):
-        if (i > j):
-            i, j = j, i
-        return self.edges[i][j + len(self.fixed)]
-
-    def get_edge_to_fixed(self, i, fixed):
-        return self.edges[i][fixed]
-
     def randomize(self):
         for i in range(len(self.free)):
             self.free[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
@@ -111,40 +149,44 @@ class Bridge:
                 row[j] = random.random()
 
     # Helpers for humans.
-    def print_desmos_copypaste(self):
-        print()
-        print("Paste me!!")
-        print(str(self.fixed)[1:-1]) # code golfin
-        print(str(self.free[:self.n_main])[1:-1])
-        print(str(self.free[self.n_main:])[1:-1])
-        print()
+    # def print_desmos_copypaste(self):
+    #     print()
+    #     print("Paste me!!")
+    #     print(str(self.fixed)[1:-1]) # code golfin
+    #     print(str(self.free[:self.n_main])[1:-1])
+    #     print(str(self.free[self.n_main:])[1:-1])
+    #     print()
         
-        # Can't paste into desmos :(
-        # for i in range(len(self.free)):
-        #     for j in range(len(self.free)):
-        #         if (self.get_edge_to_free(i, j) < 0):
-        #             continue
-        #         if (self.free[i][0] >= self.free[j][0]):
-        #             continue
+    #     # Can't paste into desmos :(
+    #     for i in range(len(self.free)):
+    #         for j in range(len(self.free)):
+    #             if (self.get_edge_to_free(i, j) < 0):
+    #                 continue
+    #             if (self.free[i][0] >= self.free[j][0]):
+    #                 continue
 
-        #         m = (self.free[i][1] - self.free[j][1]) / (self.free[i][0] - self.free[j][0])
-        #         b = self.free[i][1] - m * self.free[i][0]
-        #         print(f"y = {m}x + {b} {{{self.free[i][0]} < x < {self.free[j][0]}}}")
-
-'''
+    #             m = (self.free[i][1] - self.free[j][1]) / (self.free[i][0] - self.free[j][0])
+    #             b = self.free[i][1] - m * self.free[i][0]
+    #             print(f"y = {m}x + {b}") # {{{self.free[i][0]} < x < {self.free[j][0]}}}")
 
 if __name__ == "__main__":
+    for main in range(1, 10):
+        for other in range(1, 10):
+            aaaa = Bridge()
+            assert(len(aaaa.members) + 3 == 2 * len(aaaa.nodes))
+
+    # Manual sanity checks
     bridge = Bridge()
-    print(bridge.to_vector())
-    print(bridge.objective_function())
-    
-    print()
+    print("  Nodes:", str(bridge.nodes))
+    print("Members:", str(bridge.members))
+
+    print(" Vector:", bridge.to_vector())
+    print("Objctve:", bridge.objective_function())
 
     bridge2 = Bridge()
-    bridge2.randomize()
+    # bridge2.randomize()
     bridge2.from_vector(list(range(100)))
     print(bridge2.to_vector())
-    print(bridge2.objective_function())
+    # print(bridge2.objective_function())
     
-    bridge2.print_desmos_copypaste()
-    '''
+    # bridge2.print_desmos_copypaste()
