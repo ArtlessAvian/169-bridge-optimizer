@@ -7,7 +7,7 @@ def distance(point, other):
     return math.sqrt(dx * dx + dy * dy)
 
 class Bridge:
-    def __init__(self, n_main = 2, n_other = 3, left = (-10, 0), right = (10, 0)):
+    def __init__(self, n_main = 1, n_other = 1, left = (-10, 0), right = (10, 0)):
         # index 0 is always fixed, 1 is always a horizontal roller.
         # the next n_main have extra weight.
         # the rest (n_other) have some weight.
@@ -70,7 +70,7 @@ class Bridge:
         cost = 0
         for member, width in zip(self.members, self.edge_width):
             dist = distance(self.nodes[member[0]], self.nodes[member[1]])
-            cost += dist * width
+            cost += dist * max(0, width)
         return cost
 
     # Encourages the main road to be straight.
@@ -130,11 +130,11 @@ class Bridge:
             self.nodes[2 + i] = (vec[2 * i], vec[2 * i + 1])
 
         start = 2 * (len(self.nodes) - 2)
-        self.edge_width = vec[start : start + len(self.edge_width)]
+        self.edge_width = [abs(i) for i in vec[start : start + len(self.edge_width)]]
 
     # Helpers to interpret the internal data.
     def randomize(self):
-        for i in range(2,len(self.free)):
+        for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
         for i in range(len(self.edge_width)):
             self.edge_width[i] = random.random()
@@ -152,7 +152,7 @@ class Bridge:
             dy = self.nodes[b][1] - self.nodes[a][1]
             x = self.nodes[a][0]
             y = self.nodes[a][1]
-            print(f"({dx}t + {x}, {dy}t + {y})")
+            print(f"({dx:.5f}t + {x:.5f}, {dy:.5f}t + {y:.5f})")
         print()
 
 if __name__ == "__main__":
@@ -177,4 +177,4 @@ if __name__ == "__main__":
     print(" Vector:", bridge.to_vector())
     print("Objctve:", bridge.objective_function())
 
-    # bridge.print_desmos_copypaste()
+    bridge.print_desmos_copypaste()

@@ -44,10 +44,15 @@ def line_search(func, grad_func, vec, direction):
 def bracket_minimum(func, x = 0, s = 1e-2, k = 2.0):
     a, ya = x, func(x)
     b, yb = a + s, func(a + s)
+
+    # NOTE: this probably never happens,
+    # since the outer function always puts this in the right direction.
+    # Can't hurt to leave it though.
     if yb > ya:
         a, b = b, a
         ya, yb = yb, ya
         s = -s
+
     while True: 
         c, yc = b + s, func(b + s)
         if yc > yb:
@@ -55,7 +60,7 @@ def bracket_minimum(func, x = 0, s = 1e-2, k = 2.0):
         a, ya, b, yb = b, yb, c, yc
         s *= k
 
-def golden_section_search(func, a, b, n = 5000):
+def golden_section_search(func, a, b, n = 100):
     golden = (1 + 5 ** 0.5) / 2
     phi = golden - 1
     d = phi * b + (1 - phi) * a
@@ -69,9 +74,6 @@ def golden_section_search(func, a, b, n = 5000):
             a, b = b, c
     return c
     
-
-
-
 
 # Generic Vector Operations
 def VectorMagnitude(vec1):
