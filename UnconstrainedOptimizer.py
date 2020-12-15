@@ -9,7 +9,10 @@ class ConjugateGradientDescent:
 
     def step(self, func, grad_func, vec):
         newGradient = grad_func(vec)
-        beta = max(0, DotProduct(newGradient, SubtractVectors(newGradient, self.gradient)) / DotProduct(self.gradient, self.gradient))
+        if DotProduct(self.gradient, self.gradient) == 0:
+            beta = 0
+        else:
+            beta = max(0, DotProduct(newGradient, SubtractVectors(newGradient, self.gradient)) / DotProduct(self.gradient, self.gradient))
         
         newDirection = [-newGradient[i] + beta * self.direction[i] for i in range(len(self.direction))]
         newVec = line_search(func, grad_func, vec, newDirection)
@@ -85,7 +88,8 @@ def VectorMagnitude(vec1):
 def NormalizeVector(vec1):
     magnitude = VectorMagnitude(vec1)
     for i in range(len(vec1)):
-        vec1[i] /= magnitude * -1
+        if magnitude != 0:
+            vec1[i] /= magnitude * -1
     return vec1
 
 def SubtractVectors(vec1, vec2):
