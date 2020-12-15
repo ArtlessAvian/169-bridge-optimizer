@@ -69,7 +69,7 @@ class Bridge:
                     self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
                     last_other_index = other_index
 
-        self.edge_width = [100 for i in self.members]
+        self.edge_width = [1e8 for i in self.members]
         self.coeff = None
 
         self.road_cost_per_length = 10
@@ -102,7 +102,7 @@ class Bridge:
         return constraints
 
     def coeff_matrix(self, force_recalc = False):
-        if (self.coeff != None and not force_recalc):
+        if (self.coeff is not None and not force_recalc):
             return self.coeff
         
         # NOTE: its row major lol
@@ -180,7 +180,7 @@ class Bridge:
         for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
         for i in range(len(self.edge_width)):
-            self.edge_width[i] = random.random() * 100
+            self.edge_width[i] = 1e8
 
     # Helpers for humans.
     def print_desmos_copypaste(self):
@@ -199,7 +199,7 @@ class Bridge:
         print()
 
 if __name__ == "__main__":
-    # # Test if always statically determinate
+    # Test if always statically determinate
     # for main in range(1, 20):
     #     for other in range(1, 20):
     #         determ = Bridge(main, other)
@@ -219,7 +219,8 @@ if __name__ == "__main__":
     #     assert(i+1 == j)
 
     # Manual sanity checks
-    bridge = Bridge(2, 3)
+    bridge = Bridge(3, 2)
+    bridge.randomize()
     print("  Nodes:", str(bridge.nodes))
     print("Members:", str(bridge.members))
 
@@ -227,5 +228,6 @@ if __name__ == "__main__":
     print("Objctve:", bridge.objective_function())
 
     print(" Stress:", bridge.inequality_max_stress())
+    print(all(i > 0 for i in bridge.inequality_max_stress()))
 
     # bridge.print_desmos_copypaste()
