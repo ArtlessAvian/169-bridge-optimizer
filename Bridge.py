@@ -69,7 +69,9 @@ class Bridge:
                     self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
                     last_other_index = other_index
 
-        self.edge_width = [1e8 for i in self.members]
+        self.edge_width = [1 for i in self.members]
+        self.force_interior()
+
         self.coeff = None
 
         self.road_cost_per_length = 10
@@ -131,7 +133,10 @@ class Bridge:
         # Push down on all main nodes
         for i in range(self.n_main):
             thingies[2 * (2 + i) + 1] = 10
-        forces = linalg.solve(self.coeff_matrix(), thingies)
+        try:
+            forces = linalg.solve(self.coeff_matrix(), thingies)
+        except linalg.LinAlgError:
+            forces = [10000 for thingy in thingies]
 
         for force, width in zip(forces, self.edge_width):
             constraints.append(width - abs(force))
@@ -165,8 +170,15 @@ class Bridge:
     def randomize(self):
         for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
-        for i in range(len(self.edge_width)):
-            self.edge_width[i] = 1e8
+    
+        self.force_interior()
+
+    def force_interior(self):
+        for power in range(20):
+            for i in range(len(self.edge_width)):
+                self.edge_width[i] = 2 ** power
+            if all(i > 0 for i in self.inequality_max_stress()):
+                break
 
     # Helpers for humans.
     def print_desmos_copypaste(self):
