@@ -97,9 +97,7 @@ class Bridge:
         return []
 
     def inequality_constraints(self):
-        constraints = self.inequality_max_stress()
-        constraints.extend(self.inequality_min_length())        
-        return constraints
+        return [self.inequality_max_stress(), self.inequality_min_length()]
 
     def coeff_matrix(self, force_recalc = False):
         if (self.coeff is not None and not force_recalc):
@@ -141,11 +139,11 @@ class Bridge:
     def inequality_max_stress(self):
         constraints = []
         
-        thingies = np.zeros(len(bridge.members) + 3)
+        thingies = np.zeros(len(self.members) + 3)
         # Push down on all main nodes
         for i in range(self.n_main):
             thingies[2 * (2 + i) + 1] = 10
-        forces = linalg.solve(bridge.coeff_matrix(), thingies)
+        forces = linalg.solve(self.coeff_matrix(), thingies)
 
         for force, width in zip(forces, self.edge_width):
             constraints.append(width - abs(force))

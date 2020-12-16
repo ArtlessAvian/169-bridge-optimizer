@@ -11,25 +11,26 @@ class ConstrainedOptimizer:
         self.rg = [1 for _ in range(len(g))]
         self.rh = [1 for _ in range(len(h))]
 
-    def penalty_function(self, vec, func, g, h):
+    def penalty_function(self, vec, func, g_func, h_func):
         g_penalty,h_penalty = 0,0
 
+        g = g_func(vec)
         for i in range(len(g)):
             for j in range(len(g[i])):
                 g_penalty += self.mu[i][j] * g[i][j] + self.rg[i]/2 * (max(0, g[i][j]))**2
 
+        h = h_func(vec)
         for i in range(len(h)):
             for j in range(len(h[i])):
                 h_penalty += self.lam[i][j] * h[i][j] + self.rh[i]/2 * h[i][j]**2
 
         return func(vec) + g_penalty + h_penalty
 
-    def step(self, vec, func, g, h, a=2, e=1e-4):
-        T = lambda x: self.penalty_function(x, func, g, h)
+    def step(self, vec, func, g_func, h_func, a=2, e=1e-4):
+        T = lambda x: self.penalty_function(x, func, g_func, h_func)
         G = lambda x: calculate_gradient(x, T)
         # Use unconstrained optimizer on penalty function
         cgd = ConjugateGradientDescent(G, vec)
-        print(T(vec))
         while True:
             vec_old = vec
             vec = cgd.step(T, G, vec)
@@ -37,11 +38,13 @@ class ConstrainedOptimizer:
                 break
 
         # Update mu
+        g = g_func(vec)
         for i in range(len(g)):
             for j in range(len(self.mu[i])):
                 self.mu[i][j] += max(0, self.rg[i] * g[i][j])
 
         # Update lambda
+        h = h_func(vec)
         for i in range(len(h)):
             for j in range(len(self.lam[i])):
                 self.lam[i][j] += self.rh[i] * h[i][j]
@@ -75,36 +78,31 @@ if __name__ == "__main__":
     print("### EASY TESTS ###")
 
     easy_function = lambda vec : vec[0] ** 2 + vec[1] ** 2 + vec[0] * vec[1]
-    easy_gradient = lambda vec : [2 * vec[0] + vec[1], 2 * vec[1] + vec[0]]
-    print("Expecting 27 and [9, 9]")
-    print(easy_function([3, 3]))
-    print(easy_gradient([3, 3]))
 
-    print()
     print("Should optimize to (3, 3)")
 
-    def g_func(x):
-        return [-x[i] + 3 for i in range(len(x))]
+    def inequality(x):
+        return [[-x[i] + 3 for i in range(len(x))]]
 
-    def h_func(x):
-        return [x[0] + x[1] - 1]
+    def equality(x):
+        return []
 
-    small_test = ConstrainedOptimizer([], [h_func([-20, 21])])
-    point = [-20, 21]
-    for i in range(15):
-        print(i)
-        #print(point)
-        point = small_test.step(point, easy_function, [], [h_func(point)])
+    point = [-15, 21]
+    small_test = ConstrainedOptimizer(inequality(point), equality(point))
+    for i in range(100):
+        old = easy_function(point)
+        point = small_test.step(point, easy_function, inequality, equality)
+        if abs(old - easy_function(point)) < 1e-4:
+            break
 
     print(point)
     print("End")
 
-    '''
     print()
     print("### ACTUAL USAGE ###")
 
     # the actual problem
-    bridge = Bridge()
+    bridge = Bridge(3)
     bridge.randomize()
 
     vec = bridge.to_vector()
@@ -116,13 +114,19 @@ if __name__ == "__main__":
     # example usage of optimizer
     the_function = problem.objective_function
     the_gradient = lambda veccc : calculate_gradient(veccc, problem.objective_function)
+    optimizer = ConstrainedOptimizer(problem.inequality_constraints(vec), problem.equality_constraints(vec))
 
-    optimizer = ConjugateGradientDescent(the_gradient, vec)
-    for i in range(10):
-        vec = optimizer.step(the_function, the_gradient, vec)
+    for i in range(1000):
+        old = the_function(vec)
+        vec = optimizer.step(vec, the_function, problem.inequality_constraints, problem.equality_constraints)
+        # print("step ", i)
+        # print(the_function(vec), vec)
+        if abs(old - the_function(vec)) < 1e-4:
+            break
+
     # end example usage
 
     print()
     print("Final Objective Function")
     print(bridge.objective_function())
-    '''
+    bridge.print_desmos_copypaste()
