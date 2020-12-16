@@ -7,9 +7,8 @@ class ConstrainedOptimizer:
         # Lagrange multipliers
         self.lam = [[0 for _ in range(len(h[i]))] for i in range(len(h))]
         self.mu = [[0 for _ in range(len(g[i]))] for i in range(len(g))]
-        # Penalty parameters
-        self.rg = [1 for _ in range(len(g))]
-        self.rh = [1 for _ in range(len(h))]
+        # Penalty parameter
+        self.r = 1
 
     def penalty_function(self, vec, func, g_func, h_func):
         g_penalty,h_penalty = 0,0
@@ -17,12 +16,12 @@ class ConstrainedOptimizer:
         g = g_func(vec)
         for i in range(len(g)):
             for j in range(len(g[i])):
-                g_penalty += self.mu[i][j] * g[i][j] + self.rg[i]/2 * (max(0, g[i][j]))**2
+                g_penalty += self.mu[i][j] * g[i][j] + self.r/2 * (max(0, g[i][j]))**2
 
         h = h_func(vec)
         for i in range(len(h)):
             for j in range(len(h[i])):
-                h_penalty += self.lam[i][j] * h[i][j] + self.rh[i]/2 * h[i][j]**2
+                h_penalty += self.lam[i][j] * h[i][j] + self.r/2 * h[i][j]**2
 
         return func(vec) + g_penalty + h_penalty
 
@@ -41,20 +40,16 @@ class ConstrainedOptimizer:
         g = g_func(vec)
         for i in range(len(g)):
             for j in range(len(self.mu[i])):
-                self.mu[i][j] += max(0, self.rg[i] * g[i][j])
+                self.mu[i][j] += max(0, self.r * g[i][j])
 
         # Update lambda
         h = h_func(vec)
         for i in range(len(h)):
             for j in range(len(self.lam[i])):
-                self.lam[i][j] += self.rh[i] * h[i][j]
+                self.lam[i][j] += self.r * h[i][j]
 
         # Update r
-        # Right now all r values are the same; if we keep it this way i'll make self.r a single number instead of arrays
-        for i in range(len(self.rg)):
-            self.rg[i] *= a
-        for i in range(len(self.rh)):
-            self.rh[i] *= a
+        self.r *= a
 
         return vec
 
