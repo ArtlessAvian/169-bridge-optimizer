@@ -100,8 +100,8 @@ class Bridge:
         return [self.inequality_max_stress(), self.inequality_min_length()]
 
     def coeff_matrix(self, force_recalc = False):
-        if (self.coeff is not None and not force_recalc):
-            return self.coeff
+        # if (self.coeff is not None and not force_recalc):
+            # return self.coeff
         
         # NOTE: its row major lol
         self.coeff = np.zeros((2 * len(self.nodes), len(self.members) + 3))
@@ -121,18 +121,6 @@ class Bridge:
             # repeat
             self.coeff[2*to][i] = -dx
             self.coeff[2*to+1][i] = -dy
-
-        # # external reactions
-        # # total x
-        # self.coeff[len(self.members)][len(self.members)] = 1 # pin's x
-        # # total y
-        # self.coeff[len(self.members)+1][len(self.members)+1] = 1 # pin's y
-        # self.coeff[len(self.members)+1][len(self.members)+2] = 1 # roller's y
-        # # total moment, counterclockwise positive
-        # # moment = distance(self.nodes[0], self.nodes[1])
-        # # moment *= (self.nodes[1][0] - self.nodes[0][0]) / distance
-        # moment = self.nodes[1][0] - self.nodes[0][0]
-        # self.coeff[len(self.members)+2][len(self.members)+2] = moment # roller's y with shenanigans
 
         return self.coeff
 
@@ -203,10 +191,11 @@ if __name__ == "__main__":
     #         determ = Bridge(main, other)
     #         assert(len(determ.members) + 3 == 2 * len(determ.nodes))
 
-    # # Test if solvable on init
+    # Test if solvable on init
     # for main in range(1, 20):
     #     for other in range(1, 20):
     #         inverse = Bridge(main, other)
+    #         inverse.randomize()
     #         linalg.inv(inverse.coeff_matrix())
 
     # Test that vectors work as intended
