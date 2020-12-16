@@ -15,7 +15,7 @@ class ConjugateGradientDescent:
             beta = max(0, DotProduct(newGradient, SubtractVectors(newGradient, self.gradient)) / DotProduct(self.gradient, self.gradient))
         
         newDirection = [-newGradient[i] + beta * self.direction[i] for i in range(len(self.direction))]
-        newVec = line_search(func, grad_func, vec, newDirection)
+        newVec = strong_backtracking(func, grad_func, vec, newDirection)
 
         self.gradient = newGradient
         self.direction = newDirection
@@ -35,10 +35,52 @@ def calculate_gradient(vec, func, small_step = 1e-8):
         gradient.append(partial)    
     return gradient
 
+def strong_backtracking(func, grad_func, x, d, alpha = 1, beta = 1e-4, phi = 0.1):
+    y0, g0, y_prev, a_prev = func(x), DotProduct(grad_func(x), d), float("nan"), 0
+    alo, ahi = float("nan"), float("nan")
+
+    while True:
+        y = func([x[i] + alpha * d[i] for i in range(len(x))])
+        if y > y0 + beta * alpha * g0 or (not(math.isnan(y_prev)) and y >= y_prev):
+            alo, ahi = a_prev, alpha
+            break
+        g = DotProduct(grad_func([x[i] + alpha * d[i] for i in range(len(x))]), d)
+        if abs(g) <= -phi * g0:
+            return [x[i] + alpha * d[i] for i in range(len(x))]
+        elif g >= 0:
+            alo, ahi = alpha, a_prev
+            break
+        y_prev, a_prev, alpha = y, alpha, 2 * alpha
+    
+    ylo = func([x[i] + alo * d[i] for i in range(len(x))])
+    while True:
+        #print("stuck in second while loop")
+        alpha = (alo + ahi) / 2
+        y = func([x[i] + alpha * d[i] for i in range(len(x))])
+        if y > (y0 + beta * alpha * g0) or y >= ylo:
+            ahi = alpha
+        else:
+            g = DotProduct(grad_func([x[i] + alpha * d[i] for i in range(len(x))]), d)
+            if abs(g) <= -phi * g0:
+                print("Strong backtracking alpha: " + str(alpha))
+                return [x[i] + alpha * d[i] for i in range(len(x))]
+            elif g * (ahi - alo) >= 0:
+                ahi = alo
+            alo = alpha
+
+def backtracking_line_search(func, grad_func, x, d, alpha, p = 0.5, beta = 1e-4):
+    y, g = func(x), grad_func(x)
+    while func([x[i] + alpha * d[i] for i in range(len(x))]) > y + beta * alpha * (DotProduct(g, d)):
+        alpha *= p
+    print("alpha is: " + str(alpha))
+    return [x[i] + alpha * d[i] for i in range(len(x))]
+            
+
 def line_search(func, grad_func, vec, direction):
     objective = lambda a : func([vec[i] + a * direction[i] for i in range(len(vec))])
     a, b = bracket_minimum(objective)
     alpha = golden_section_search(objective, a, b)
+    print("Line search alpha: " + str(alpha))
     return [vec[i] + alpha * direction[i] for i in range(len(vec))]
     # really garbage line search
     # tendency to explode for large gradients
@@ -123,7 +165,10 @@ if __name__ == "__main__":
     print()
     print("Should return about (0.5, 0.5)")
     print(line_search(easy_function, easy_gradient, [-20, 21], [1, -1]))
-
+    print("Strong Backtracking:")
+    print(strong_backtracking(easy_function, easy_gradient, [-20, 21], [1, -1]))
+    print("Back tracking line search:")
+    print(backtracking_line_search(easy_function, easy_gradient, [-20, 21], [1, -1], 1000))
     print()
     print("Should optimize to (0, 0)")
     small_test = ConjugateGradientDescent(easy_gradient, [-20, 21])
