@@ -5,7 +5,7 @@ from Problem import Problem
 class ConjugateGradientDescent:
     def __init__(self, grad_func, vec):
         self.gradient = grad_func(vec)
-        self.direction = NormalizeVector(self.gradient)
+        self.direction = [-i for i in self.gradient]
 
     def step(self, func, grad_func, vec):
         newGradient = grad_func(vec)
@@ -36,15 +36,21 @@ def calculate_gradient(vec, func, small_step = 1e-8):
     return gradient
 
 def strong_backtracking(func, grad_func, x, d, alpha = 1, beta = 1e-4, phi = 0.1):
-    y0, g0, y_prev, a_prev = func(x), DotProduct(grad_func(x), d), float("nan"), 0
-    alo, ahi = float("nan"), float("nan")
+    # Convenience
+    func_on_line = lambda alpha : func([x[i] + alpha * d[i] for i in range(len(x))])
+    def directional_derivative(alpha):
+        gradienttt = grad_func([x[i] + alpha * d[i] for i in range(len(x))])
+        return DotProduct(gradienttt, d)
 
+    y0, g0 = func(x), DotProduct(grad_func(x), d)
+    y_prev, a_prev = float("nan"), 0
+    alo, ahi = float("nan"), float("nan")
     while True:
-        y = func([x[i] + alpha * d[i] for i in range(len(x))])
+        y = func_on_line(alpha)
         if y > y0 + beta * alpha * g0 or (not(math.isnan(y_prev)) and y >= y_prev):
             alo, ahi = a_prev, alpha
             break
-        g = DotProduct(grad_func([x[i] + alpha * d[i] for i in range(len(x))]), d)
+        g = directional_derivative(alpha)
         if abs(g) <= -phi * g0:
             return [x[i] + alpha * d[i] for i in range(len(x))]
         elif g >= 0:
@@ -52,15 +58,14 @@ def strong_backtracking(func, grad_func, x, d, alpha = 1, beta = 1e-4, phi = 0.1
             break
         y_prev, a_prev, alpha = y, alpha, 2 * alpha
     
-    ylo = func([x[i] + alo * d[i] for i in range(len(x))])
+    ylo = func_on_line(alo)
     while True:
-        #print("stuck in second while loop")
         alpha = (alo + ahi) / 2
-        y = func([x[i] + alpha * d[i] for i in range(len(x))])
+        y = func_on_line(alpha)
         if y > (y0 + beta * alpha * g0) or y >= ylo:
             ahi = alpha
         else:
-            g = DotProduct(grad_func([x[i] + alpha * d[i] for i in range(len(x))]), d)
+            g = directional_derivative(alpha)
             if abs(g) <= -phi * g0:
                 print("Strong backtracking alpha: " + str(alpha))
                 return [x[i] + alpha * d[i] for i in range(len(x))]
