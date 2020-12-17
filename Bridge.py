@@ -4,17 +4,13 @@ from numpy import linalg
 import numpy as np
 
 def distance(point, other):
-    dx = point[0] - other[0]
-    dy = point[1] - other[1]
-    return math.sqrt(dx * dx + dy * dy)
+    return math.sqrt(np.dot(point - other, point - other))
 
 def normalizedDiff(to, fromm):
     dist = distance(to, fromm)
     if dist == 0:
         return (0, 1) # tbh, idk
-    dx = to[0] - fromm[0]
-    dy = to[1] - fromm[1]
-    return (dx / dist, dy / dist)
+    return (to - fromm) / dist
 
 class Bridge:
     def __init__(self, n_main = 1, n_other = 1, left = (-10, 0), right = (10, 0)):
@@ -96,36 +92,29 @@ class Bridge:
         return road_length * self.road_cost_per_length
 
     def inequality_constraints(self):
-        constraints = self.inequality_max_stress()
-        constraints.extend(self.inequality_min_length())
-        return constraints
-
-        # return [*self.inequality_max_stress(), *self.inequality_min_length()]
+        return np.append(self.inequality_max_stress(), self.inequality_min_length())
+        
 
     def coeff_matrix(self, force_recalc = False):
-        # if (self.coeff is not None and not force_recalc):
-            # return self.coeff
-        
-        # NOTE: its row major lol
-        self.coeff = np.zeros((2 * len(self.nodes), len(self.members) + 3))
+        coeff = np.zeros((2 * len(self.nodes), len(self.members) + 3))
 
         # internal forces
-        self.coeff[0][len(self.members)] = 1 # pin's x
-        self.coeff[1][len(self.members) + 1] = 1 # pin's y
-        self.coeff[3][len(self.members) + 2] = 1 # roller's y
+        coeff[0][len(self.members)] = 1 # pin's x
+        coeff[1][len(self.members) + 1] = 1 # pin's y
+        coeff[3][len(self.members) + 2] = 1 # roller's y
         # i is the compression/tension
         for i, (fromm, to) in enumerate(self.members):
             dx, dy = normalizedDiff(self.nodes[to], self.nodes[fromm])
             # solving for i
             # 0 = ... + i * dx + ...
-            self.coeff[2*fromm][i] = dx
+            coeff[2*fromm][i] = dx
             # 0 = ... + i * dy + ...
-            self.coeff[2*fromm+1][i] = dy
+            coeff[2*fromm+1][i] = dy
             # repeat
-            self.coeff[2*to][i] = -dx
-            self.coeff[2*to+1][i] = -dy
+            coeff[2*to][i] = -dx
+            coeff[2*to+1][i] = -dy
 
-        return self.coeff
+        return coeff
 
     def inequality_max_stress(self):        
         sumforces = np.zeros(len(self.members) + 3)
@@ -138,19 +127,15 @@ class Bridge:
         except linalg.LinAlgError:
             return np.full_like(sumforces, 1e-3)
 
-        constraints = []
-
-        for tension, width in zip(tensions, self.edge_width):
-            constraints.append(width - abs(tension))
-        
-        return np.array(constraints)
-
-    def inequality_min_length(self):
-        min_length = 0.1
-        constraints = []
-        for i, j in self.members:
-            constraints.append(distance(self.nodes[i], self.nodes[j]) - min_length)
+        constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
         return constraints
+
+    min_length = 0.1
+    def inequality_min_length(self):
+        distances = []
+        for i, j in self.members:
+            distances.append(distance(self.nodes[i], self.nodes[j]))
+        return np.array(distances) - Bridge.min_length
 
     # Vector Conversion
 
@@ -222,16 +207,27 @@ if __name__ == "__main__":
     # Manual sanity checks
     bridge = Bridge(3, 2)
     # bridge.randomize()
-    bridge.from_vector(np.arange(100))
-    print(bridge.to_vector())
     
-    # print("  Nodes:", str(bridge.nodes))
-    # print("Members:", str(bridge.members))
+    print("Nodes:")
+    print(str(bridge.nodes))
+    print("\nMembers:")
+    print(str(bridge.members))
 
-    # print(" Vector:", bridge.to_vector())
-    # print("Objctve:", bridge.objective_function())
+    print("\nAs Vector:")
+    print(bridge.to_vector())
+    print("\nObjctve:")
+    print(bridge.objective_function())
 
-    # print(" Stress:", bridge.inequality_max_stress())
-    # print(all(i > 0 for i in bridge.inequality_max_stress()))
+    print("\nExtra Stress:")
+    print(bridge.inequality_max_stress())
+    print("\nSolvable?:")
+    print(all(i > 0 for i in bridge.inequality_max_stress()))
+
+    print("\nExtra Distances:")
+    print(bridge.inequality_min_length())
+    print("\nSolvable?:")
+    print(all(i > 0 for i in bridge.inequality_min_length()))
+
+    print(bridge.inequality_constraints())
 
     # bridge.print_desmos_copypaste()
