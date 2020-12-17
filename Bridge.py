@@ -95,11 +95,12 @@ class Bridge:
 
         return road_length * self.road_cost_per_length
 
-    def equality_constraints(self):
-        return []
-
     def inequality_constraints(self):
-        return [self.inequality_max_stress(), self.inequality_min_length()]
+        constraints = self.inequality_max_stress()
+        constraints.extend(self.inequality_min_length())
+        return constraints
+
+        # return [*self.inequality_max_stress(), *self.inequality_min_length()]
 
     def coeff_matrix(self, force_recalc = False):
         # if (self.coeff is not None and not force_recalc):
@@ -136,7 +137,7 @@ class Bridge:
         try:
             forces = linalg.solve(self.coeff_matrix(), thingies)
         except linalg.LinAlgError:
-            forces = [10000 for thingy in thingies]
+            forces = [1e-3 for thingy in thingies]
 
         for force, width in zip(forces, self.edge_width):
             constraints.append(width - abs(force))

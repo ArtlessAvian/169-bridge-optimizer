@@ -1,6 +1,7 @@
 from Bridge import Bridge
 import math 
 
+# Facade for Bridge.
 class Problem:
     def __init__(self, bridge = Bridge()):
         self.bridge = bridge
@@ -11,10 +12,6 @@ class Problem:
     def objective_function(self, vec):
         self.bridge.from_vector(vec)
         return self.bridge.objective_function()
-    
-    def equality_constraints(self, vec):
-        self.bridge.from_vector(vec)
-        return self.bridge.equality_constraints()
 
     def inequality_constraints(self, vec):
         self.bridge.from_vector(vec)

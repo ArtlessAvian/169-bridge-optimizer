@@ -21,6 +21,15 @@ class ConjugateGradientDescent:
         self.direction = newDirection
         return newVec
 
+def calculate_directional_derivative(vec, func, direction, small_step = 1e-8):
+    old = func(vec)
+    step = [vec[i] + direction[i] * small_step for i in range(len(vec))]
+    new = func(step)
+
+    direction_normalizer = math.sqrt(sum(x * x for x in direction))
+
+    return (new - old) / small_step / direction_normalizer
+
 def calculate_gradient(vec, func, small_step = 1e-8):
     gradient = []
     old = func(vec)
@@ -35,25 +44,36 @@ def calculate_gradient(vec, func, small_step = 1e-8):
         gradient.append(partial)    
     return gradient
 
-def strong_backtracking(func, grad_func, x, d, alpha = 1, beta = 1e-4, phi = 0.1):
+def strong_backtracking(func, grad_func, x, d, alpha = 1e-4, beta = 1e-4, phi = 0.1):
     # Convenience
     func_on_line = lambda alpha : func([x[i] + alpha * d[i] for i in range(len(x))])
     def directional_derivative(alpha):
-        gradienttt = grad_func([x[i] + alpha * d[i] for i in range(len(x))])
-        return DotProduct(gradienttt, d)
+        return calculate_directional_derivative([x[i] + alpha * d[i] for i in range(len(x))], func, d)
+        # return DotProduct(gradienttt, d)
 
-    y0, g0 = func(x), DotProduct(grad_func(x), d)
+    y0, g0 = func(x), directional_derivative(0)
     y_prev, a_prev = float("nan"), 0
     alo, ahi = float("nan"), float("nan")
+
+    if g0 > 0:
+        # search in opposite direction
+        g0 *= -1
+        d = [-i for i in d]
+        print("shiet")
+
+
     while True:
         y = func_on_line(alpha)
         if y > y0 + beta * alpha * g0 or (not(math.isnan(y_prev)) and y >= y_prev):
             alo, ahi = a_prev, alpha
+            print("took step upwards")
             break
         g = directional_derivative(alpha)
         if abs(g) <= -phi * g0:
+            print("early exit")
             return [x[i] + alpha * d[i] for i in range(len(x))]
         elif g >= 0:
+            print("new gradient positive")
             alo, ahi = alpha, a_prev
             break
         y_prev, a_prev, alpha = y, alpha, 2 * alpha
@@ -62,12 +82,14 @@ def strong_backtracking(func, grad_func, x, d, alpha = 1, beta = 1e-4, phi = 0.1
     while True:
         alpha = (alo + ahi) / 2
         y = func_on_line(alpha)
+        print(alo, ylo, alpha, y)
+        input()
         if y > (y0 + beta * alpha * g0) or y >= ylo:
             ahi = alpha
         else:
             g = directional_derivative(alpha)
             if abs(g) <= -phi * g0:
-                print("Strong backtracking alpha: " + str(alpha))
+                # print("Strong backtracking alpha: " + str(alpha))
                 return [x[i] + alpha * d[i] for i in range(len(x))]
             elif g * (ahi - alo) >= 0:
                 ahi = alo
@@ -77,7 +99,7 @@ def backtracking_line_search(func, grad_func, x, d, alpha, p = 0.5, beta = 1e-4)
     y, g = func(x), grad_func(x)
     while func([x[i] + alpha * d[i] for i in range(len(x))]) > y + beta * alpha * (DotProduct(g, d)):
         alpha *= p
-    print("alpha is: " + str(alpha))
+    # print("alpha is: " + str(alpha))
     return [x[i] + alpha * d[i] for i in range(len(x))]
             
 
@@ -85,7 +107,7 @@ def line_search(func, grad_func, vec, direction):
     objective = lambda a : func([vec[i] + a * direction[i] for i in range(len(vec))])
     a, b = bracket_minimum(objective)
     alpha = golden_section_search(objective, a, b)
-    print("Line search alpha: " + str(alpha))
+    # print("Line search alpha: " + str(alpha))
     return [vec[i] + alpha * direction[i] for i in range(len(vec))]
     # really garbage line search
     # tendency to explode for large gradients

@@ -4,52 +4,32 @@ from Problem import Problem
 
 class ConstrainedOptimizer:
     def __init__(self, g, h):
-        # Lagrange multipliers
-        self.lam = [[0 for _ in range(len(h[i]))] for i in range(len(h))]
-        self.mu = [[0 for _ in range(len(g[i]))] for i in range(len(g))]
         # Penalty parameter
-        self.r = 1
+        self.rho = 0.1
 
-    def penalty_function(self, vec, func, g_func, h_func):
-        g_penalty,h_penalty = 0,0
+    # Returns the penalty.
+    def penalty_function(self, vec, g_func, h_func):
+        g_penalty = 0
 
         g = g_func(vec)
-        for i in range(len(g)):
-            for j in range(len(g[i])):
-                g_penalty += self.mu[i][j] * g[i][j] + self.r/2 * (max(0, g[i][j]))**2
+        for penalty in g:
+            g_penalty += 1/penalty
 
-        h = h_func(vec)
-        for i in range(len(h)):
-            for j in range(len(h[i])):
-                h_penalty += self.lam[i][j] * h[i][j] + self.r/2 * h[i][j]**2
-
-        return func(vec) + g_penalty + h_penalty
+        return g_penalty/self.rho
 
     def step(self, vec, func, g_func, h_func, a=2, e=1e-4):
-        T = lambda x: self.penalty_function(x, func, g_func, h_func)
+        T = lambda x: func(vec) + self.penalty_function(x, g_func, h_func)
         G = lambda x: calculate_gradient(x, T)
         # Use unconstrained optimizer on penalty function
         cgd = ConjugateGradientDescent(G, vec)
-        while True:
+        for _ in range(10):
             vec_old = vec
             vec = cgd.step(T, G, vec)
             if abs(T(vec_old) - T(vec)) < e:
                 break
 
-        # Update mu
-        g = g_func(vec)
-        for i in range(len(g)):
-            for j in range(len(self.mu[i])):
-                self.mu[i][j] += max(0, self.r * g[i][j])
-
-        # Update lambda
-        h = h_func(vec)
-        for i in range(len(h)):
-            for j in range(len(self.lam[i])):
-                self.lam[i][j] += self.r * h[i][j]
-
         # Update r
-        self.r *= a
+        self.rho *= a
 
         return vec
 
@@ -77,14 +57,15 @@ if __name__ == "__main__":
     print("Should optimize to (3, 3)")
 
     def inequality(x):
-        return [[-x[i] + 3 for i in range(len(x))]]
+        return [x[i] - 3 for i in range(len(x))]
 
     def equality(x):
         return []
 
-    point = [-15, 21]
+    point = [21, 21]
     small_test = ConstrainedOptimizer(inequality(point), equality(point))
-    for i in range(100):
+    for i in range(10):
+        print(f"step {i}: {easy_function(point)}")
         old = easy_function(point)
         point = small_test.step(point, easy_function, inequality, equality)
         if abs(old - easy_function(point)) < 1e-4:
