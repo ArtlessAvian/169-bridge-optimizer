@@ -4,28 +4,28 @@ from Problem import Problem
 import numpy as np
 
 class HookJeeves:
-    def __init__(self):
+    def __init__(self, alpha = 10):
+        self.alpha = alpha
         pass
 
-    def step(self, func, vec, alpha = 10, epsilon = 1e-4, gamma = 0.5):
+    def step(self, func, vec, epsilon = 1e-4, gamma = 0.5):
         y, n = func(vec), len(vec)
-        while alpha > epsilon:
-            #print(f"Alpha: {alpha}")
-            improved = False
-            x_best, y_best = vec, y
-            for i in range(n):
-                basis = np.array([(1 if j == i else 0) for j in range(len(vec))])
-                for sign in [-1, 1]:
-                    new_vec = vec + sign * alpha * basis
-                    new_y = func(new_vec)
+        
+        improved = False
+        x_best, y_best = vec, y
+        for i in range(n):
+            basis = np.array([(1 if j == i else 0) for j in range(len(vec))])
+            for sign in [-1, 1]:
+                new_vec = vec + sign * self.alpha * basis
+                new_y = func(new_vec)
 
-                    if(new_y < y_best):
-                        x_best, y_best, improved = new_vec, new_y, True
-               
-            vec, y = x_best, y_best
+                if(new_y < y_best):
+                    x_best, y_best, improved = new_vec, new_y, True
+            
+        vec, y = x_best, y_best
 
-            if not improved:
-                alpha *= gamma
+        if not improved:
+            self.alpha *= gamma
         return vec
 
 

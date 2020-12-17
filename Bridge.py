@@ -70,7 +70,7 @@ class Bridge:
 
         self.coeff = None
 
-        self.road_cost_per_length = 10
+        self.road_cost_per_length = 100
 
     def objective_function(self):
         return self.objective_strut_cost() + self.objective_road_cost()
@@ -125,7 +125,7 @@ class Bridge:
         try:
             tensions = linalg.solve(self.coeff_matrix(), sumforces)
         except linalg.LinAlgError:
-            return np.full_like(sumforces, 1e-3)
+            return np.full_like(sumforces, -1e8)
 
         constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
         return constraints
