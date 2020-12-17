@@ -24,6 +24,7 @@ class Bridge:
         self.nodes = [left, right]
         self.nodes.extend((((i + 1) / (n_main + 1)) * 20 - 10, 0) for i in range(n_main))
         self.nodes.extend((((i + 1) / (n_other + 1)) * 20 - 10, 5) for i in range(n_other))
+        self.nodes = np.array(self.nodes)
 
         self.n_main = n_main
 
@@ -49,7 +50,6 @@ class Bridge:
         # now we have a big polygon!
         # connect the rest, somehow.
         # (many ways to do this, its kinda hard tbh.)
-        # (TODO: make symmetrical for shenanigans)
         if n_other > n_main:
             last_main_index = 0 # 0 start intentional
             for i in range(n_other):
@@ -69,7 +69,7 @@ class Bridge:
                     self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
                     last_other_index = other_index
 
-        self.edge_width = [1 for i in self.members]
+        self.edge_width = np.ones(len(self.members))
         self.force_interior()
 
         self.coeff = None
@@ -127,22 +127,23 @@ class Bridge:
 
         return self.coeff
 
-    def inequality_max_stress(self):
-        constraints = []
-        
-        thingies = np.zeros(len(self.members) + 3)
+    def inequality_max_stress(self):        
+        sumforces = np.zeros(len(self.members) + 3)
         # Push down on all main nodes
         for i in range(self.n_main):
-            thingies[2 * (2 + i) + 1] = 10
-        try:
-            forces = linalg.solve(self.coeff_matrix(), thingies)
-        except linalg.LinAlgError:
-            forces = [1e-3 for thingy in thingies]
+            sumforces[2 * (2 + i) + 1] = 10
 
-        for force, width in zip(forces, self.edge_width):
-            constraints.append(width - abs(force))
+        try:
+            tensions = linalg.solve(self.coeff_matrix(), sumforces)
+        except linalg.LinAlgError:
+            return np.full_like(sumforces, 1e-3)
+
+        constraints = []
+
+        for tension, width in zip(tensions, self.edge_width):
+            constraints.append(width - abs(tension))
         
-        return constraints
+        return np.array(constraints)
 
     def inequality_min_length(self):
         min_length = 0.1
@@ -158,14 +159,14 @@ class Bridge:
         for point in self.nodes[2:]:
             vec.extend(point)
         vec.extend(self.edge_width)
-        return vec
+        return np.array(vec)
     
     def from_vector(self, vec):
-        for i in range(len(self.nodes) - 2):
-            self.nodes[2 + i] = (vec[2 * i], vec[2 * i + 1])
+        nodes_slice = vec[: 2 * (len(self.nodes)-2)].reshape((len(self.nodes)-2, 2))
+        self.nodes = np.append(self.nodes[:2], nodes_slice, 0)
 
         start = 2 * (len(self.nodes) - 2)
-        self.edge_width = [abs(i) for i in vec[start : start + len(self.edge_width)]]
+        self.edge_width = np.absolute(vec[start : start + len(self.edge_width)])
 
     # Helpers to interpret the internal data.
     def randomize(self):
@@ -220,14 +221,17 @@ if __name__ == "__main__":
 
     # Manual sanity checks
     bridge = Bridge(3, 2)
-    bridge.randomize()
-    print("  Nodes:", str(bridge.nodes))
-    print("Members:", str(bridge.members))
+    # bridge.randomize()
+    bridge.from_vector(np.arange(100))
+    print(bridge.to_vector())
+    
+    # print("  Nodes:", str(bridge.nodes))
+    # print("Members:", str(bridge.members))
 
-    print(" Vector:", bridge.to_vector())
-    print("Objctve:", bridge.objective_function())
+    # print(" Vector:", bridge.to_vector())
+    # print("Objctve:", bridge.objective_function())
 
-    print(" Stress:", bridge.inequality_max_stress())
-    print(all(i > 0 for i in bridge.inequality_max_stress()))
+    # print(" Stress:", bridge.inequality_max_stress())
+    # print(all(i > 0 for i in bridge.inequality_max_stress()))
 
     # bridge.print_desmos_copypaste()
