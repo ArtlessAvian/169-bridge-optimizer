@@ -2,6 +2,37 @@ import math
 from Bridge import Bridge
 from Problem import Problem
 
+class HookJeeves:
+    def __init__(self):
+        pass
+
+    def step(self, func, vec, alpha = 10, e = 1e-4, gamma = 0.5):
+        y, n = func(vec), len(vec)
+        while alpha > e:
+            improved = False
+            x_best, y_best = vec, y
+            for i in range(n):
+                new_vec  = [vec[j] + alpha * -1 * (1 if j == i else 0) for j in range(len(vec))]
+                new_y = func(new_vec)
+
+                if(new_y < y_best):
+                    x_best, y_best, improved = new_vec, new_y, True
+
+
+                new_vec  = [vec[j] + alpha * 1 * (1 if j == i else 0) for j in range(len(vec))]
+                new_y = func(new_vec)
+
+                if(new_y < y_best):
+                    x_best, y_best, improved = new_vec, new_y, True
+                
+
+            vec, y = x_best, y_best
+
+            if not improved:
+                alpha *= gamma
+        return vec
+                
+
 class ConjugateGradientDescent:
     def __init__(self, grad_func, vec):
         self.gradient = grad_func(vec)
@@ -192,21 +223,22 @@ if __name__ == "__main__":
     print()
     print("Should return about (0.5, 0.5)")
     print(line_search(easy_function, easy_gradient, [-20, 21], [1, -1]))
-    print("Strong Backtracking:")
-    print(strong_backtracking(easy_function, easy_gradient, [-20, 21], [1, -1]))
-    print("Back tracking line search:")
-    print(backtracking_line_search(easy_function, easy_gradient, [-20, 21], [1, -1], 1000))
+    #print("Strong Backtracking:")
+    #print(strong_backtracking(easy_function, easy_gradient, [-20, 21], [1, -1]))
+    #print("Back tracking line search:")
+    #print(backtracking_line_search(easy_function, easy_gradient, [-20, 21], [1, -1], 1000))
     print()
     print("Should optimize to (0, 0)")
-    small_test = ConjugateGradientDescent(easy_gradient, [-20, 21])
+    small_test = HookJeeves()#ConjugateGradientDescent(easy_gradient, [-20, 21])
     point = [-20, 21]
     for i in range(5):
         print(point)
-        point = small_test.step(easy_function, easy_gradient, point)
+        point = small_test.step(easy_function, point)
 
     print(point)
 
     print()
+    
     print("### ACTUAL USAGE ###")
 
     # the actual problem
@@ -223,11 +255,14 @@ if __name__ == "__main__":
     the_function = problem.objective_function
     the_gradient = lambda veccc : calculate_gradient(veccc, problem.objective_function)
 
-    optimizer = ConjugateGradientDescent(the_gradient, vec)
+    #optimizer = ConjugateGradientDescent(the_gradient, vec)
+    optimizer = HookJeeves()
     for i in range(10):
-        vec = optimizer.step(the_function, the_gradient, vec)
+
+        vec = optimizer.step(the_function, vec)
     # end example usage
 
     print()
     print("Final Objective Function")
     print(bridge.objective_function())
+    
