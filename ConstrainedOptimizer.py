@@ -1,4 +1,4 @@
-from UnconstrainedOptimizer import ConjugateGradientDescent
+from UnconstrainedOptimizer import HookJeeves
 from Bridge import Bridge
 from Problem import Problem
 
@@ -21,10 +21,12 @@ class ConstrainedOptimizer:
         T = lambda x: func(vec) + self.penalty_function(x, g_func, h_func)
         G = lambda x: calculate_gradient(x, T)
         # Use unconstrained optimizer on penalty function
-        cgd = ConjugateGradientDescent(G, vec)
+        cgd = HookJeeves()
         for _ in range(10):
+            #print(f"Constrained Step: {_}")
+            #input()
             vec_old = vec
-            vec = cgd.step(T, G, vec)
+            vec = cgd.step(T, vec)
             if abs(T(vec_old) - T(vec)) < e:
                 break
 
@@ -73,7 +75,7 @@ if __name__ == "__main__":
 
     print(point)
     print("End")
-
+    input()
     print()
     print("### ACTUAL USAGE ###")
 
@@ -90,12 +92,13 @@ if __name__ == "__main__":
     # example usage of optimizer
     the_function = problem.objective_function
     the_gradient = lambda veccc : calculate_gradient(veccc, problem.objective_function)
-    optimizer = ConstrainedOptimizer(problem.inequality_constraints(vec), problem.equality_constraints(vec))
+    optimizer = ConstrainedOptimizer(problem.inequality_constraints(vec), problem.inequality_constraints(vec))
 
-    for i in range(1000):
+    for i in range(30):
         old = the_function(vec)
-        vec = optimizer.step(vec, the_function, problem.inequality_constraints, problem.equality_constraints)
-        # print("step ", i)
+        vec = optimizer.step(vec, the_function, problem.inequality_constraints, problem.inequality_constraints(vec))
+        print("step ", i)
+        input()
         # print(the_function(vec), vec)
         if abs(old - the_function(vec)) < 1e-4:
             break

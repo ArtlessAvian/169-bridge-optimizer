@@ -6,14 +6,17 @@ class HookJeeves:
     def __init__(self):
         pass
 
-    def step(self, func, vec, alpha = 10, e = 1e-4, gamma = 0.5):
+    def step(self, func, vec, alpha = 10000, e = 1e-4, gamma = 0.5):
         y, n = func(vec), len(vec)
         while alpha > e:
+            #print(f"Alpha: {alpha}")
             improved = False
             x_best, y_best = vec, y
             for i in range(n):
                 new_vec  = [vec[j] + alpha * -1 * (1 if j == i else 0) for j in range(len(vec))]
                 new_y = func(new_vec)
+
+                #print(f"First Old Y: {new_y}, Best Y: {y_best}")
 
                 if(new_y < y_best):
                     x_best, y_best, improved = new_vec, new_y, True
@@ -22,10 +25,13 @@ class HookJeeves:
                 new_vec  = [vec[j] + alpha * 1 * (1 if j == i else 0) for j in range(len(vec))]
                 new_y = func(new_vec)
 
+                #print(f"Second Old Y: {new_y}, Best Y: {y_best}")
+
                 if(new_y < y_best):
                     x_best, y_best, improved = new_vec, new_y, True
                 
-
+            #print(f"Improved: {improved}")
+            #print(f"Old Vec: {vec}, Best: {x_best}, Old Y: {y}, Best Y: {y_best}")
             vec, y = x_best, y_best
 
             if not improved:
