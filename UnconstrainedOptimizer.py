@@ -1,37 +1,27 @@
 import math
 from Bridge import Bridge
 from Problem import Problem
+import numpy as np
 
 class HookJeeves:
     def __init__(self):
         pass
 
-    def step(self, func, vec, alpha = 10000, e = 1e-4, gamma = 0.5):
+    def step(self, func, vec, alpha = 10, epsilon = 1e-4, gamma = 0.5):
         y, n = func(vec), len(vec)
-        while alpha > e:
+        while alpha > epsilon:
             #print(f"Alpha: {alpha}")
             improved = False
             x_best, y_best = vec, y
             for i in range(n):
-                new_vec  = [vec[j] + alpha * -1 * (1 if j == i else 0) for j in range(len(vec))]
-                new_y = func(new_vec)
+                basis = np.array([(1 if j == i else 0) for j in range(len(vec))])
+                for sign in [-1, 1]:
+                    new_vec = vec + sign * alpha * basis
+                    new_y = func(new_vec)
 
-                #print(f"First Old Y: {new_y}, Best Y: {y_best}")
-
-                if(new_y < y_best):
-                    x_best, y_best, improved = new_vec, new_y, True
-
-
-                new_vec  = [vec[j] + alpha * 1 * (1 if j == i else 0) for j in range(len(vec))]
-                new_y = func(new_vec)
-
-                #print(f"Second Old Y: {new_y}, Best Y: {y_best}")
-
-                if(new_y < y_best):
-                    x_best, y_best, improved = new_vec, new_y, True
-                
-            #print(f"Improved: {improved}")
-            #print(f"Old Vec: {vec}, Best: {x_best}, Old Y: {y}, Best Y: {y_best}")
+                    if(new_y < y_best):
+                        x_best, y_best, improved = new_vec, new_y, True
+               
             vec, y = x_best, y_best
 
             if not improved:
@@ -183,39 +173,6 @@ def golden_section_search(func, a, b, n = 100):
             a, b = b, c
     return c
     
-
-# Generic Vector Operations
-def VectorMagnitude(vec1):
-    magnitude = 0
-    for i in range(len(vec1)):
-        magnitude += vec1[i] * vec1[i]
-    return math.sqrt(magnitude)
-
-def NormalizeVector(vec1):
-    magnitude = VectorMagnitude(vec1)
-    for i in range(len(vec1)):
-        if magnitude != 0:
-            vec1[i] /= magnitude * -1
-    return vec1
-
-def SubtractVectors(vec1, vec2):
-    result = []
-    for i in range(len(vec1)):
-        result.append(vec1[i] - vec2[i])
-    return result
-
-def AddVectors(vec1, vec2):
-    result = []
-    for i in range(len(vec1)):
-        result.append(vec1[i] + vec2[i])
-    return result
-
-def DotProduct(vec1, vec2):
-    #assume vec1 and vec2 have equal lengths
-    dot = 0
-    for i in range(len(vec1)):
-        dot += vec1[i] * vec2[i]
-    return dot
 
 if __name__ == "__main__":
     print("### EASY TESTS ###")
