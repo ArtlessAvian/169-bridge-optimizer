@@ -71,8 +71,6 @@ class Bridge:
 
         self.coeff = None
 
-        self.road_cost_per_length = 100
-
     def objective_function(self):
         return self.objective_strut_cost() + self.objective_road_cost()
 
@@ -84,13 +82,14 @@ class Bridge:
         return cost
 
     # Encourages the main road to be straight.
+    road_cost_per_length = 100
     def objective_road_cost(self):
         road_length = distance(self.nodes[0], self.nodes[2])
         for i in range(self.n_main - 1):
             road_length += distance(self.nodes[2 + i], self.nodes[2 + i + 1])
         road_length += distance(self.nodes[self.n_main + 1], self.nodes[1])
 
-        return road_length * self.road_cost_per_length
+        return road_length * Bridge.road_cost_per_length
 
     def inequality_constraints(self):
         return self.inequality_min_length()
@@ -117,11 +116,14 @@ class Bridge:
 
         return coeff
 
+    main_weight = 10
+    other_weight = 2
+
     def net_force_vector(self):
         net_forces = np.zeros(2 * len(self.nodes))
         # Push down on all main nodes
         for i in range(2, len(self.nodes)):
-            net_forces[2 * i + 1] = 10 if i < self.n_main + 2 else 2
+            net_forces[2 * i + 1] = Bridge.main_weight if i < self.n_main + 2 else Bridge.other_weight
         return net_forces
 
     def get_tensions(self):
@@ -145,7 +147,7 @@ class Bridge:
     #     constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
     #     return constraints
 
-    min_length = 4
+    min_length = 1
     def inequality_min_length(self):
         distances = []
         for i, j in self.members:
