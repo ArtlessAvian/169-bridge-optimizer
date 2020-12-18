@@ -82,7 +82,7 @@ class Bridge:
         return cost
 
     # Encourages the main road to be straight.
-    road_cost_per_length = 100
+    road_cost_per_length = 200
     def objective_road_cost(self):
         road_length = distance(self.nodes[0], self.nodes[2])
         for i in range(self.n_main - 1):
@@ -173,7 +173,7 @@ class Bridge:
     # Helpers to interpret the internal data.
     def randomize(self):
         for i in range(2,len(self.nodes)):
-            self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
+            self.nodes[i] = (random.random() * 10 - 5, random.random() * 10 - 5)
 
         # self.force_interior()
 

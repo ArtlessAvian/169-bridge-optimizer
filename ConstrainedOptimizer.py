@@ -1,11 +1,11 @@
-from UnconstrainedOptimizer import HookJeeves
+from UnconstrainedOptimizer import HookeJeeves
 from Bridge import Bridge
 from Problem import Problem
 import numpy as np
 
 class ConstrainedOptimizer:
     def __init__(self):
-        self.r = 100
+        self.r = 50
         pass
 
     # Returns the penalty.
@@ -18,11 +18,11 @@ class ConstrainedOptimizer:
 
         return sum_penalty
 
-    def step(self, vec, func, ineq_constr, a=1.1, epsilon=1e-4):
+    def step(self, vec, func, ineq_constr, a=1.5, epsilon=1e-4):
         T = lambda x: func(x) + self.penalty_function(x, ineq_constr) * self.r
         # Use unconstrained optimizer on penalty function
-        unconstrained = HookJeeves()
-        for _ in range(30):
+        unconstrained = HookeJeeves()
+        for _ in range(10):
             vec_old = vec
             vec = unconstrained.step(T, vec)
 

@@ -4,7 +4,7 @@ from Problem import Problem
 import numpy as np
 import matplotlib.pyplot as plt
 
-MAX = 10
+MAX = 30
 
 def print_plot(bridge, i):
     for j, (a, b) in enumerate(bridge.members):
@@ -29,7 +29,8 @@ def print_plot(bridge, i):
 
 if __name__ == "__main__":
     # the problem
-    bridge = Bridge(3, 2)
+    bridge = Bridge(5, 4)
+
     bridge.randomize()
 
     vec = bridge.to_vector()
@@ -53,3 +54,5 @@ if __name__ == "__main__":
             print(f"done! {i}")
             print_plot(bridge,-1)
             break
+        if i == MAX:
+            print("hitting the max")

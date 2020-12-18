@@ -3,7 +3,9 @@ from Bridge import Bridge
 from Problem import Problem
 import numpy as np
 
-class HookJeeves:
+
+#Algorithm 7.5 Hooke-Jeeves Method, Algorithms for Optimization, Kochenderfer and Wheeler
+class HookeJeeves:
     def __init__(self, alpha = 10):
         self.alpha = alpha
         pass
