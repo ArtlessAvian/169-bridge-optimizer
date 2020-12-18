@@ -66,8 +66,8 @@ class Bridge:
                     self.members.append((main_index + 2 - 1, other_index + (2 + n_main)))
                     last_other_index = other_index
 
-        self.edge_width = np.ones(len(self.members))
-        self.force_interior()
+        # self.edge_width = np.ones(len(self.members))
+        # self.force_interior()
 
         self.coeff = None
 
@@ -78,7 +78,7 @@ class Bridge:
 
     def objective_strut_cost(self):
         cost = 0
-        for member, width in zip(self.members, self.edge_width):
+        for member, width in zip(self.members, self.get_tensions()):
             dist = distance(self.nodes[member[0]], self.nodes[member[1]])
             cost += dist * max(0, width)
         return cost
@@ -117,19 +117,33 @@ class Bridge:
 
         return coeff
 
-    def inequality_max_stress(self):
-        sumforces = np.zeros(len(self.members) + 3)
+    def net_force_vector(self):
+        net_forces = np.zeros(2 * len(self.nodes))
         # Push down on all main nodes
-        for i in range(self.n_main):
-            sumforces[2 * (2 + i) + 1] = 10
-
+        for i in range(2, len(self.nodes)):
+            net_forces[2 * i + 1] = 10 if i < self.n_main + 2 else 2
+        return net_forces
+    
+    def get_tensions(self):
+        net_forces = self.net_force_vector()
         try:
-            tensions = linalg.solve(self.coeff_matrix(), sumforces)
+            return linalg.solve(self.coeff_matrix(), net_forces)
         except linalg.LinAlgError:
-            return np.full_like(sumforces, -1e8)
+            return np.full_like(net_forces, 1e8)
 
-        constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
-        return constraints
+    # def inequality_max_stress(self):        
+    #     sumforces = np.zeros(2 * len(self.nodes))
+    #     # Push down on all main nodes
+    #     for i in range(2, len(self.nodes)):
+    #         sumforces[2 * i + 1] = 10 if i < self.n_main + 2 else 2
+
+    #     try:
+    #         tensions = linalg.solve(self.coeff_matrix(), sumforces)
+    #     except linalg.LinAlgError:
+    #         return np.full_like(sumforces, -1e8)
+
+    #     constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
+    #     return constraints
 
     min_length = 0.5
     def inequality_min_length(self):
@@ -144,15 +158,15 @@ class Bridge:
         vec = []
         for point in self.nodes[2:]:
             vec.extend(point)
-        vec.extend(self.edge_width)
+        # vec.extend(self.edge_width)
         return np.array(vec)
 
     def from_vector(self, vec):
         nodes_slice = vec[: 2 * (len(self.nodes)-2)].reshape((len(self.nodes)-2, 2))
         self.nodes = np.append(self.nodes[:2], nodes_slice, 0)
 
-        start = 2 * (len(self.nodes) - 2)
-        self.edge_width = np.absolute(vec[start : start + len(self.edge_width)])
+        # start = 2 * (len(self.nodes) - 2)
+        # self.edge_width = np.absolute(vec[start : start + len(self.edge_width)])
 
     # Helpers to interpret the internal data.
     def randomize(self):
@@ -219,16 +233,16 @@ if __name__ == "__main__":
     print("\nObjctve:")
     print(bridge.objective_function())
 
-    print("\nExtra Stress:")
-    print(bridge.inequality_max_stress())
-    print("\nSolvable?:")
-    print(all(i > 0 for i in bridge.inequality_max_stress()))
+    # print("\nExtra Stress:")
+    # print(bridge.inequality_max_stress())
+    # print("\nSolvable?:")
+    # print(all(i > 0 for i in bridge.inequality_max_stress()))
 
     print("\nExtra Distances:")
     print(bridge.inequality_min_length())
     print("\nSolvable?:")
     print(all(i > 0 for i in bridge.inequality_min_length()))
 
-    print(bridge.inequality_constraints())
+    # print(bridge.inequality_constraints())
 
     # bridge.print_desmos_copypaste()

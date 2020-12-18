@@ -53,8 +53,8 @@ if __name__ == "__main__":
     print("### ACTUAL USAGE ###")
 
     # the actual problem
-    bridge = Bridge(3, 2)
-    bridge.randomize()
+    bridge = Bridge(2, 3)
+    # bridge.randomize()
 
     vec = bridge.to_vector()
     problem = Problem(bridge)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     the_constraint = problem.inequality_constraints
     optimizer = ConstrainedOptimizer()
 
-    for i in range(30):
+    for i in range(20):
         old = the_function(vec)
         vec = optimizer.step(vec, the_function, the_constraint)
         bridge.print_plot(i)
