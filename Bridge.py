@@ -3,6 +3,7 @@ import math
 from numpy import linalg
 import numpy as np
 
+
 def distance(point, other):
     return math.sqrt(np.dot(point - other, point - other))
 
@@ -26,7 +27,7 @@ class Bridge:
 
         # Create (2 * #nodes - 3) members.
         # This makes the bridge solvable.
-        self.members = [] 
+        self.members = []
 
         # Connect the left to the main,
         # the main to each other,
@@ -92,8 +93,8 @@ class Bridge:
         return road_length * self.road_cost_per_length
 
     def inequality_constraints(self):
-        return np.append(self.inequality_max_stress(), self.inequality_min_length())
-        
+        return self.inequality_min_length()
+        # self.inequality_max_stress()
 
     def coeff_matrix(self, force_recalc = False):
         coeff = np.zeros((2 * len(self.nodes), len(self.members) + 3))
@@ -116,7 +117,7 @@ class Bridge:
 
         return coeff
 
-    def inequality_max_stress(self):        
+    def inequality_max_stress(self):
         sumforces = np.zeros(len(self.members) + 3)
         # Push down on all main nodes
         for i in range(self.n_main):
@@ -130,7 +131,7 @@ class Bridge:
         constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
         return constraints
 
-    min_length = 0.1
+    min_length = 0.5
     def inequality_min_length(self):
         distances = []
         for i, j in self.members:
@@ -145,7 +146,7 @@ class Bridge:
             vec.extend(point)
         vec.extend(self.edge_width)
         return np.array(vec)
-    
+
     def from_vector(self, vec):
         nodes_slice = vec[: 2 * (len(self.nodes)-2)].reshape((len(self.nodes)-2, 2))
         self.nodes = np.append(self.nodes[:2], nodes_slice, 0)
@@ -157,7 +158,7 @@ class Bridge:
     def randomize(self):
         for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
-    
+
         self.force_interior()
 
     def force_interior(self):
@@ -174,7 +175,7 @@ class Bridge:
         print(str(self.nodes[:2])[1:-1]) # code golfin
         print(str(self.nodes[2:self.n_main+2])[1:-1])
         print(str(self.nodes[self.n_main+2:])[1:-1])
-        
+
         for a, b in self.members:
             dx = self.nodes[b][0] - self.nodes[a][0]
             dy = self.nodes[b][1] - self.nodes[a][1]
@@ -207,7 +208,7 @@ if __name__ == "__main__":
     # Manual sanity checks
     bridge = Bridge(3, 2)
     # bridge.randomize()
-    
+
     print("Nodes:")
     print(str(bridge.nodes))
     print("\nMembers:")

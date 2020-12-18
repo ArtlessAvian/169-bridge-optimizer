@@ -1,5 +1,5 @@
 from Bridge import Bridge
-import math 
+import math
 
 # Facade for Bridge.
 class Problem:
@@ -17,9 +17,9 @@ class Problem:
         self.bridge.from_vector(vec)
         return self.bridge.inequality_constraints()
 
-'''
+
 if __name__ == "__main__":
-    
+
     # Example usage?
     bridge = Bridge()
     bridge.randomize()
@@ -38,5 +38,5 @@ if __name__ == "__main__":
     # print([round(i*1000) / 1000 for i in vec])
     bridge.from_vector(vec)
     bridge.print_desmos_copypaste()
+    bridge.print_plot()
     print(bridge.objective_function())
-'''

@@ -5,7 +5,7 @@ import numpy as np
 
 class ConstrainedOptimizer:
     def __init__(self):
-        self.r = 1000000
+        self.r = 5
         pass
 
     # Returns the penalty.
@@ -22,10 +22,10 @@ class ConstrainedOptimizer:
         T = lambda x: func(x) + self.penalty_function(x, ineq_constr) * self.r
         # Use unconstrained optimizer on penalty function
         unconstrained = HookJeeves()
-        for _ in range(20):
+        for _ in range(50):
             vec_old = vec
             vec = unconstrained.step(T, vec)
-            
+
         self.r *= a
         return vec
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     problem = Problem(bridge)
 
     bridge.print_desmos_copypaste()
-    
+
     print("Original Objective Function")
     print(bridge.objective_function())
 
@@ -72,8 +72,10 @@ if __name__ == "__main__":
     for i in range(30):
         old = the_function(vec)
         vec = optimizer.step(vec, the_function, the_constraint)
+        bridge.print_plot(i)
         if abs(old - the_function(vec)) < 1e-4:
             print(f"done! {i}")
+            bridge.print_plot(-1)
             break
 
     # end example usage
