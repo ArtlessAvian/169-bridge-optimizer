@@ -5,7 +5,7 @@ import numpy as np
 
 class ConstrainedOptimizer:
     def __init__(self):
-        self.r = 5
+        self.r = 100
         pass
 
     # Returns the penalty.
@@ -18,11 +18,11 @@ class ConstrainedOptimizer:
 
         return sum_penalty
 
-    def step(self, vec, func, ineq_constr, a=2, epsilon=1e-4):
+    def step(self, vec, func, ineq_constr, a=1.1, epsilon=1e-4):
         T = lambda x: func(x) + self.penalty_function(x, ineq_constr) * self.r
         # Use unconstrained optimizer on penalty function
         unconstrained = HookJeeves()
-        for _ in range(50):
+        for _ in range(30):
             vec_old = vec
             vec = unconstrained.step(T, vec)
 

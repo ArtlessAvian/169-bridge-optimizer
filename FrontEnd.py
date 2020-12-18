@@ -4,14 +4,14 @@ from Problem import Problem
 import numpy as np
 import matplotlib.pyplot as plt
 
-MAX = 20
+MAX = 10
 
 def print_plot(bridge, i):
     for j, (a, b) in enumerate(bridge.members):
         x = [bridge.nodes[a][0], bridge.nodes[b][0]]
         y = [bridge.nodes[a][1], bridge.nodes[b][1]]
         # print(bridge.edge_width[j])
-        plt.plot(x,y, label = str(round(bridge.edge_width[j], 3)))
+        plt.plot(x,y, label = str(round(bridge.inequality_min_length()[j] + bridge.min_length, 3)))
         # plt.pause(0.05)
     plt.xlim(-11, 11)
     plt.ylim(-10, 10)
@@ -19,7 +19,7 @@ def print_plot(bridge, i):
     plt.title(bridge.objective_function())
     plt.legend(loc="upper left", bbox_to_anchor=(1,1))
     plt.pause(0.05)
-    if i == -1 or i == MAX-1:
+    if i == -1 or i == MAX:
         plt.savefig("Bridges/bridge_final.")
         plt.show()
     else:
@@ -44,7 +44,8 @@ if __name__ == "__main__":
     optimizer = ConstrainedOptimizer()
 
     plt.figure(figsize=(12,9))
-    for i in range(MAX):
+    print_plot(bridge, 0)
+    for i in range(1,MAX+1):
         old = the_function(vec)
         vec = optimizer.step(vec, the_function, the_constraint)
         print_plot(bridge, i)

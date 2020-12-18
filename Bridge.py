@@ -123,7 +123,7 @@ class Bridge:
         for i in range(2, len(self.nodes)):
             net_forces[2 * i + 1] = 10 if i < self.n_main + 2 else 2
         return net_forces
-    
+
     def get_tensions(self):
         net_forces = self.net_force_vector()
         try:
@@ -131,7 +131,7 @@ class Bridge:
         except linalg.LinAlgError:
             return np.full_like(net_forces, 1e8)
 
-    # def inequality_max_stress(self):        
+    # def inequality_max_stress(self):
     #     sumforces = np.zeros(2 * len(self.nodes))
     #     # Push down on all main nodes
     #     for i in range(2, len(self.nodes)):
@@ -145,7 +145,7 @@ class Bridge:
     #     constraints = self.edge_width - np.absolute(tensions[:len(self.edge_width)])
     #     return constraints
 
-    min_length = 0.5
+    min_length = 4
     def inequality_min_length(self):
         distances = []
         for i, j in self.members:
