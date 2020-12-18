@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 MAX = 20
 
 def print_plot(bridge, i):
+    tensions = bridge.get_tensions()
     for j, (a, b) in enumerate(bridge.members):
         x = [bridge.nodes[a][0], bridge.nodes[b][0]]
         y = [bridge.nodes[a][1], bridge.nodes[b][1]]
         # print(bridge.edge_width[j])
-        plt.plot(x,y, label = str(round(bridge.edge_width[j], 3)))
+        plt.plot(x,y, label = str(round(tensions[j], 3)))
         # plt.pause(0.05)
     plt.title(bridge.objective_function())
     plt.legend(loc="upper left", bbox_to_anchor=(1,1))

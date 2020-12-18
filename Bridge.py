@@ -80,7 +80,7 @@ class Bridge:
         cost = 0
         for member, width in zip(self.members, self.get_tensions()):
             dist = distance(self.nodes[member[0]], self.nodes[member[1]])
-            cost += dist * max(0, width)
+            cost += dist * abs(width)
         return cost
 
     # Encourages the main road to be straight.
@@ -173,14 +173,14 @@ class Bridge:
         for i in range(2,len(self.nodes)):
             self.nodes[i] = (random.random() * 20 - 10, random.random() * 20 - 10)
 
-        self.force_interior()
+        # self.force_interior()
 
-    def force_interior(self):
-        for power in range(20):
-            for i in range(len(self.edge_width)):
-                self.edge_width[i] = 2 ** power
-            if all(i > 0 for i in self.inequality_max_stress()):
-                break
+    # def force_interior(self):
+        # for power in range(20):
+        #     for i in range(len(self.edge_width)):
+        #         self.edge_width[i] = 2 ** power
+        #     if all(i > 0 for i in self.inequality_max_stress()):
+        #         break
 
     # Helpers for humans.
     def print_desmos_copypaste(self):
